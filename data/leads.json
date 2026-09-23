@@ -1,0 +1,19 @@
+[
+  {
+    "id": "lead_1787226842558_l2eho3",
+    "nome": "pedro queblas",
+    "email": "pedroqueblas01@gmail.com",
+    "whatsapp": "81996271214",
+    "createdAt": "2026-08-20T11:54:02.559Z",
+    "emailSent": false,
+    "emailError": "missing_api_key"
+  },
+  {
+    "id": "lead_1787324770819_7l1okz",
+    "nome": "pedro queblas",
+    "email": "pedroqueblas01@gmail.com",
+    "whatsapp": "81996271214",
+    "interesse": "Quero me associar à ABENPO",
+    "createdAt": "2026-08-21T15:06:10.820Z"
+  }
+]
