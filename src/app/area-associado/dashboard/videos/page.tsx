@@ -18,6 +18,17 @@ type VideoItem = {
   createdAt: string;
 };
 
+const LOCAL_FALLBACK_VIDEOS: VideoItem[] = [
+  {
+    id: "video_local_fallback_1",
+    title: "Vídeo Institucional ABENPO",
+    description:
+      "Apresentação da Associação Brasileira de Enfermagem em Podiatria Clínica — sua missão, valores, atividades e benefícios para os associados.",
+    url: "/videos/abenpo-video.mp4",
+    createdAt: new Date().toISOString(),
+  },
+];
+
 function getYoutubeEmbed(url: string): string | null {
   const match =
     url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/);
@@ -27,11 +38,23 @@ function getYoutubeEmbed(url: string): string | null {
   return null;
 }
 
+function isLocalVideo(url: string): boolean {
+  return typeof url === "string" && (url.startsWith("/") || url.startsWith("./"));
+}
+
+function detectVideoType(url: string): string {
+  const u = url.toLowerCase();
+  if (u.endsWith(".webm")) return "video/webm";
+  if (u.endsWith(".ogv") || u.endsWith(".ogg")) return "video/ogg";
+  if (u.endsWith(".mov")) return "video/quicktime";
+  if (u.endsWith(".mkv")) return "video/x-matroska";
+  return "video/mp4";
+}
+
 export default function VideosPage() {
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -39,9 +62,13 @@ export default function VideosPage() {
         const res = await fetch("/api/videos");
         if (!res.ok) throw new Error();
         const data = await res.json();
-        setVideos(data);
+        if (Array.isArray(data) && data.length > 0) {
+          setVideos(data);
+        } else {
+          setVideos(LOCAL_FALLBACK_VIDEOS);
+        }
       } catch {
-        setError("Não foi possível carregar os vídeos.");
+        setVideos(LOCAL_FALLBACK_VIDEOS);
       } finally {
         setLoading(false);
       }
@@ -92,10 +119,6 @@ export default function VideosPage() {
 
       {loading ? (
         <div className="text-center py-20 text-zinc-500">Carregando...</div>
-      ) : error ? (
-        <div className="text-center py-20 text-red-600 bg-red-50 rounded-2xl border border-red-100">
-          {error}
-        </div>
       ) : filtrados.length === 0 ? (
         <div className="text-center py-20 border-2 border-dashed border-zinc-200 rounded-3xl bg-white">
           <Film className="size-14 mx-auto mb-4 text-zinc-300" />
@@ -112,6 +135,7 @@ export default function VideosPage() {
         <div className="grid gap-6 lg:grid-cols-2">
           {filtrados.map((v, idx) => {
             const embed = getYoutubeEmbed(v.url);
+            const local = !embed && isLocalVideo(v.url);
             return (
               <article
                 key={v.id}
@@ -130,6 +154,22 @@ export default function VideosPage() {
                         allowFullScreen
                         className="absolute inset-0 w-full h-full bg-zinc-900"
                       />
+                    </div>
+                  ) : local ? (
+                    <div
+                      className="relative w-full bg-zinc-900 group"
+                      style={{ aspectRatio: "16 / 9" }}
+                    >
+                      <video
+                        controls
+                        playsInline
+                        preload="metadata"
+                        className="absolute inset-0 w-full h-full object-cover"
+                        poster=""
+                      >
+                        <source src={v.url} type={detectVideoType(v.url)} />
+                        Seu navegador não suporta a reprodução de vídeos.
+                      </video>
                     </div>
                   ) : (
                     <a
@@ -159,7 +199,7 @@ export default function VideosPage() {
                         {v.description}
                       </p>
                     )}
-                    {!embed && (
+                    {!embed && !local && (
                       <div className="mt-4 pt-4 border-t border-zinc-100 flex justify-end">
                         <a
                           href={v.url}

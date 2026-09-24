@@ -128,11 +128,11 @@ export default function CadastroPage() {
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 flex flex-col">
       <div className="section-container py-5">
         <Link
-          href="/area-associado/escolha"
+          href="/"
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-zinc-700 hover:text-emerald-700 transition-colors"
         >
           <ArrowLeft className="size-4" />
-          Voltar para escolha
+          Voltar ao site
         </Link>
       </div>
 

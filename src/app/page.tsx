@@ -9,9 +9,8 @@ import { AssociarSection } from "@/components/sections/AssociarSection";
 import { FooterSection } from "@/components/sections/FooterSection";
 import { GaleriaSection } from "@/components/sections/GaleriaSection";
 import { CursosSection } from "@/components/sections/CursosSection";
-import { getArticles } from "@/lib/article-storage";
 import { getDiretoriaImages } from "@/lib/diretoria-images";
-import { ClipboardList, FileCheck, Star, MapPin, Clock, FileText, User, ExternalLink } from "lucide-react";
+import { ClipboardList, FileCheck, Star, MapPin, Clock, User, ExternalLink } from "lucide-react";
 import { getEvents } from "@/lib/event-storage";
 import { type Event, getEventIcon } from "@/lib/event-utils";
 
@@ -78,18 +77,11 @@ export default async function Home({ searchParams }: PageProps) {
   const diretoriaImages = getDiretoriaImages();
 
   let events: Awaited<ReturnType<typeof getEvents>> = [];
-  let articles: Awaited<ReturnType<typeof getArticles>> = [];
 
   try {
     events = await getEvents();
   } catch (err) {
     console.error("Erro ao carregar eventos na home:", err);
-  }
-
-  try {
-    articles = await getArticles();
-  } catch (err) {
-    console.error("Erro ao carregar artigos na home:", err);
   }
 
   const enviado =
@@ -139,9 +131,6 @@ export default async function Home({ searchParams }: PageProps) {
               <a className="hover:text-emerald-700 transition-colors" href="#cursos">
                 Cursos
               </a>
-              <a className="hover:text-emerald-700 transition-colors" href="#artigos">
-                Artigos
-              </a>
               <a className="hover:text-emerald-700 transition-colors" href="#como-funciona">
                 Como funciona
               </a>
@@ -152,7 +141,7 @@ export default async function Home({ searchParams }: PageProps) {
 
             <div className="flex items-center gap-3 shrink-0">
               <Link
-                href="/area-associado/escolha"
+                href="/area-associado/login"
                 className="inline-flex items-center gap-2 rounded-xl bg-white/90 px-3 sm:px-4 py-2 text-sm font-bold text-emerald-800 border-2 border-emerald-600 shadow-sm shadow-emerald-100 hover:bg-emerald-50 hover:shadow-md hover:shadow-emerald-200 hover:border-emerald-700 hover:-translate-y-0.5 transition-all duration-300 backdrop-blur-sm ring-1 ring-emerald-100"
               >
                 <User className="size-4" />
@@ -307,56 +296,6 @@ export default async function Home({ searchParams }: PageProps) {
         <GaleriaSection />
 
         <CursosSection />
-
-        <section id="artigos" className="section-spacing section-alt relative overflow-hidden">
-          <div className="bg-blobs" aria-hidden="true">
-            <div className="bg-blobs__blob -top-40 right-[10%] h-80 w-80 bg-emerald-200/40" />
-            <div className="bg-blobs__blob -bottom-32 left-[5%] h-72 w-72 bg-teal-100/50" />
-          </div>
-          <div className="section-container relative">
-            <div className="section-header">
-              <p className="section-eyebrow">Artigos</p>
-              <span className="section-divider section-divider--center" />
-              <h2 className="section-title">Publicações e Conteúdos</h2>
-            </div>
-
-            <div className="mt-12">
-              {articles.length === 0 ? (
-                <div className="text-center py-16">
-                  <p className="text-xl font-semibold text-zinc-500">Sem artigos no momento</p>
-                </div>
-              ) : (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {articles.map((article, index) => (
-                    <article
-                      key={article.id}
-                      className="card-institutional p-7 opacity-0 animate-fadeInUp"
-                      style={{ animationDelay: `${index * 0.15}s` }}
-                    >
-                      <div className="card-institutional__glow" />
-                      <div className="relative">
-                        <div className="icon-box icon-box--size-10 mb-5">
-                          <FileText className="size-5" />
-                        </div>
-                        <h3 className="text-lg font-bold text-zinc-900 tracking-tight mb-4">
-                          {article.title}
-                        </h3>
-                        <a
-                          href={article.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 hover:text-emerald-900 transition-colors"
-                        >
-                          Ler artigo <ExternalLink className="size-4" />
-                        </a>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
 
         <section id="como-funciona" className="section-spacing relative overflow-hidden">
           <div className="bg-blobs" aria-hidden="true">
