@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  trailingSlash: false,
   images: {
     remotePatterns: [
       {
@@ -20,6 +21,7 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Access-Control-Allow-Origin", value: "*" },
           { key: "Access-Control-Allow-Methods", value: "GET, HEAD, OPTIONS" },
+          { key: "Access-Control-Expose-Headers", value: "Content-Range, Accept-Ranges, Content-Length" },
           {
             key: "Cache-Control",
             value: "public, max-age=31536000, immutable",
@@ -39,6 +41,15 @@ const nextConfig: NextConfig = {
         headers: [
           { key: "Content-Type", value: "video/ogg" },
           { key: "Accept-Ranges", value: "bytes" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+        ],
+      },
+      {
+        source: "/api/stream-video",
+        headers: [
+          { key: "Accept-Ranges", value: "bytes" },
+          { key: "Access-Control-Allow-Origin", value: "*" },
+          { key: "Access-Control-Allow-Methods", value: "GET, HEAD, OPTIONS" },
           { key: "X-Content-Type-Options", value: "nosniff" },
         ],
       },
