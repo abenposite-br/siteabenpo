@@ -47,26 +47,11 @@ export default function DashboardLayout({
     name: string;
     email: string;
     phone: string;
-  } | null>(() => {
-    if (typeof window === "undefined") return null;
-    try {
-      const raw = localStorage.getItem("abenpo-associado-login");
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  });
-  const [ready, setReady] = useState(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      return Boolean(localStorage.getItem("abenpo-associado-login"));
-    } catch {
-      return false;
-    }
-  });
+  } | null>(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (user && ready) return;
+    let cancelled = false;
     const raw = localStorage.getItem("abenpo-associado-login");
     if (!raw) {
       router.replace("/area-associado/login");
@@ -79,11 +64,14 @@ export default function DashboardLayout({
       router.replace("/area-associado/login");
       return;
     }
-    queueMicrotask(() => {
+    if (!cancelled) {
       setUser(parsed);
       setReady(true);
-    });
-  }, [router, user, ready]);
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
 
   const handleLogout = () => {
     localStorage.removeItem("abenpo-associado-login");

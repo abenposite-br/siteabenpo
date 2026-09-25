@@ -51,8 +51,18 @@ function resolveLocalVideoSrc(url: string): string {
   return url;
 }
 
+function detectVideoType(url: string): string {
+  const u = url.toLowerCase();
+  if (u.endsWith(".webm")) return "video/webm";
+  if (u.endsWith(".ogv") || u.endsWith(".ogg")) return "video/ogg";
+  if (u.endsWith(".mov")) return "video/quicktime";
+  if (u.endsWith(".mkv")) return "video/x-matroska";
+  return "video/mp4";
+}
+
 function LocalVideoPlayer({
   url,
+  title,
 }: {
   url: string;
   title?: string;
@@ -62,84 +72,99 @@ function LocalVideoPlayer({
   const [isLoaded, setIsLoaded] = useState(false);
 
   const src = useMemo(() => resolveLocalVideoSrc(url), [url]);
-  const videoType = useMemo(() => detectVideoType(url), [url]);
+  const mimeType = useMemo(() => detectVideoType(src), [src]);
+  const videoKey = useMemo(() => `${retryKey}-${src}`, [retryKey, src]);
 
   return (
-    <div
-      className="relative w-full bg-black group overflow-hidden"
-      style={{ aspectRatio: "16 / 9" }}
-    >
-      <video
-        key={`${retryKey}-${src}`}
-        controls
-        playsInline
-        preload="auto"
-        onLoadedData={() => {
-          setIsLoaded(true);
-          setHasError(false);
-        }}
-        onError={() => setHasError(true)}
-        onCanPlay={() => setIsLoaded(true)}
-        className="absolute inset-0 w-full h-full object-contain bg-black"
-      >
-        <source src={`${src}`} type={videoType} />
-        <source src={`${src}`} type="video/mp4" />
-        <source src={`${src}`} type="video/webm" />
-        Seu navegador não suporta a reprodução de vídeos.
-      </video>
+    <div className="relative w-full bg-black group overflow-hidden rounded-none">
+      <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
+        <video
+          key={videoKey}
+          controls
+          playsInline
+          preload="auto"
+          onLoadedData={() => {
+            setIsLoaded(true);
+            setHasError(false);
+          }}
+          onError={(e) => {
+            const code = e.currentTarget.error?.code;
+            const msg = e.currentTarget.error?.message ?? "";
+            console.warn("[VideoPlayer] Erro ao carregar:", src, { code, msg });
+            setHasError(true);
+          }}
+          onCanPlay={() => setIsLoaded(true)}
+          onLoadStart={() => {
+            setIsLoaded(false);
+            setHasError(false);
+          }}
+          onLoadedMetadata={() => setIsLoaded(true)}
+          poster=""
+          className="block w-full h-full bg-black"
+          style={{ objectFit: "contain", maxWidth: "100%", maxHeight: "100%" }}
+        >
+          <source
+            src={src}
+            type={`${mimeType}; codecs="avc1.42E01E, mp4a.40.2"`}
+          />
+          <source src={src} type={mimeType} />
+          Seu navegador não suporta a reprodução de vídeos. Abra
+          diretamente em{" "}
+          <a
+            href={src}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-emerald-500 underline"
+          >
+            este link
+          </a>
+          .
+        </video>
 
-      {!isLoaded && !hasError && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 text-white z-10 pointer-events-none">
-          <div className="size-10 rounded-full border-4 border-emerald-500/40 border-t-emerald-400 animate-spin mb-3" />
-          <p className="text-xs text-zinc-300">Carregando vídeo...</p>
-        </div>
-      )}
-
-      {hasError && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-zinc-950 via-zinc-900 to-emerald-950 text-white z-20 px-4 text-center">
-          <Play className="size-14 mb-3 text-white/60" />
-          <h4 className="text-sm font-bold text-zinc-100 mb-1">
-            Não foi possível reproduzir
-          </h4>
-          <p className="text-xs text-zinc-400 mb-4 max-w-xs">
-            O arquivo de vídeo pode estar corrompido ou incompatível. Tente
-            novamente ou abra em outra aba.
-          </p>
-          <div className="flex gap-2 flex-wrap justify-center">
-            <button
-              type="button"
-              onClick={() => {
-                setHasError(false);
-                setIsLoaded(false);
-                setRetryKey((k) => k + 1);
-              }}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-3 py-2 text-xs font-bold text-white shadow-lg transition-colors"
-            >
-              Tentar novamente
-            </button>
-            <a
-              href={src}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/15 ring-1 ring-white/20 px-3 py-2 text-xs font-bold text-white backdrop-blur transition-colors"
-            >
-              Abrir vídeo
-              <ExternalLink className="size-3" />
-            </a>
+        {!isLoaded && !hasError && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 text-white z-10 pointer-events-none">
+            <div className="size-10 rounded-full border-4 border-emerald-500/40 border-t-emerald-400 animate-spin mb-3" />
+            <p className="text-xs text-zinc-300">Carregando vídeo...</p>
           </div>
-        </div>
-      )}
+        )}
+
+        {hasError && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-zinc-950 via-zinc-900 to-emerald-950 text-white z-20 px-4 text-center">
+            <Play className="size-14 mb-3 text-white/60" />
+            <h4 className="text-sm font-bold text-zinc-100 mb-1">
+              Não foi possível reproduzir
+            </h4>
+            <p className="text-xs text-zinc-400 mb-4 max-w-xs">
+              Este vídeo pode ter um codec de áudio incompatível com o player
+              HTML5 (exportado via WhatsApp). Use os botões abaixo:
+            </p>
+            <div className="flex gap-2 flex-wrap justify-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setHasError(false);
+                  setIsLoaded(false);
+                  setRetryKey((k) => k + 1);
+                }}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-3 py-2 text-xs font-bold text-white shadow-lg transition-colors"
+              >
+                Tentar novamente
+              </button>
+              <a
+                href={src}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/15 ring-1 ring-white/20 px-3 py-2 text-xs font-bold text-white backdrop-blur transition-colors"
+              >
+                Abrir vídeo
+                <ExternalLink className="size-3" />
+              </a>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
-}
-
-function detectVideoType(url: string): string {
-  const u = url.toLowerCase();
-  if (u.endsWith(".webm")) return "video/webm";
-  if (u.endsWith(".ogv") || u.endsWith(".ogg")) return "video/ogg";
-  if (u.endsWith(".mov")) return "video/quicktime";
-  if (u.endsWith(".mkv")) return "video/x-matroska";
-  return "video/mp4";
 }
 
 export default function VideosPage() {
