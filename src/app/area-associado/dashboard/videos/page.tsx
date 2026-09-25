@@ -70,10 +70,33 @@ function LocalVideoPlayer({
   const [retryKey, setRetryKey] = useState(0);
   const [hasError, setHasError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [errorInfo, setErrorInfo] = useState<{ code: number; msg: string } | null>(
+    null,
+  );
 
   const src = useMemo(() => resolveLocalVideoSrc(url), [url]);
   const mimeType = useMemo(() => detectVideoType(src), [src]);
   const videoKey = useMemo(() => `${retryKey}-${src}`, [retryKey, src]);
+  const cacheBust = useMemo(
+    () => `${src.includes("?") ? "&" : "?"}t=${Date.now() + retryKey}`,
+    [src, retryKey],
+  );
+  const srcFresh = `${src}${cacheBust}`;
+
+  const mediaErrorCodeLabel = (code: number) => {
+    switch (code) {
+      case 1:
+        return "MEDIA_ERR_ABORTED — carregamento interrompido";
+      case 2:
+        return "MEDIA_ERR_NETWORK — erro de rede ao baixar";
+      case 3:
+        return "MEDIA_ERR_DECODE — codec incompatível ou arquivo corrompido";
+      case 4:
+        return "MEDIA_ERR_SRC_NOT_SUPPORTED — formato/URL não suportado";
+      default:
+        return `Código de erro desconhecido (${code})`;
+    }
+  };
 
   return (
     <div className="relative w-full bg-black group overflow-hidden rounded-none">
@@ -83,22 +106,37 @@ function LocalVideoPlayer({
           controls
           playsInline
           preload="auto"
+          autoPlay={false}
+          muted={false}
           onLoadedData={() => {
             setIsLoaded(true);
             setHasError(false);
+            setErrorInfo(null);
           }}
           onError={(e) => {
-            const code = e.currentTarget.error?.code;
+            const code = e.currentTarget.error?.code ?? 0;
             const msg = e.currentTarget.error?.message ?? "";
-            console.warn("[VideoPlayer] Erro ao carregar:", src, { code, msg });
+            const detail = mediaErrorCodeLabel(code);
+            console.error(
+              "[VideoPlayer] Falha reprodução:",
+              src,
+              { code, msg, detail, srcFresh },
+            );
+            setErrorInfo({ code, msg: detail });
             setHasError(true);
           }}
-          onCanPlay={() => setIsLoaded(true)}
+          onCanPlay={() => {
+            setIsLoaded(true);
+            setHasError(false);
+          }}
           onLoadStart={() => {
             setIsLoaded(false);
             setHasError(false);
+            setErrorInfo(null);
           }}
-          onLoadedMetadata={() => setIsLoaded(true)}
+          onLoadedMetadata={() => {
+            setIsLoaded(true);
+          }}
           poster=""
           className="block w-full h-full bg-black"
           style={{ objectFit: "contain", maxWidth: "100%", maxHeight: "100%" }}
@@ -108,6 +146,13 @@ function LocalVideoPlayer({
             type={`${mimeType}; codecs="avc1.42E01E, mp4a.40.2"`}
           />
           <source src={src} type={mimeType} />
+          <source
+            src={srcFresh}
+            type={`${mimeType}; codecs="hev1.1.6.L93.B0, mp4a.40.2"`}
+          />
+          <source src={srcFresh} type={mimeType} />
+          <source src={src} />
+          <source src={srcFresh} />
           Seu navegador não suporta a reprodução de vídeos. Abra
           diretamente em{" "}
           <a
@@ -134,9 +179,15 @@ function LocalVideoPlayer({
             <h4 className="text-sm font-bold text-zinc-100 mb-1">
               Não foi possível reproduzir
             </h4>
+            {errorInfo && (
+              <p className="text-[10px] font-mono text-emerald-300/70 mb-2 max-w-xs truncate w-full">
+                {errorInfo.msg}
+              </p>
+            )}
             <p className="text-xs text-zinc-400 mb-4 max-w-xs">
-              Este vídeo pode ter um codec de áudio incompatível com o player
-              HTML5 (exportado via WhatsApp). Use os botões abaixo:
+              Este vídeo foi exportado via WhatsApp/InShot e pode ter um codec
+              incompatível com o player HTML5. Use os botões abaixo ou abra
+              diretamente no seu navegador/sistema:
             </p>
             <div className="flex gap-2 flex-wrap justify-center">
               <button
@@ -144,6 +195,7 @@ function LocalVideoPlayer({
                 onClick={() => {
                   setHasError(false);
                   setIsLoaded(false);
+                  setErrorInfo(null);
                   setRetryKey((k) => k + 1);
                 }}
                 className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-3 py-2 text-xs font-bold text-white shadow-lg transition-colors"
@@ -157,6 +209,15 @@ function LocalVideoPlayer({
                 className="inline-flex items-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/15 ring-1 ring-white/20 px-3 py-2 text-xs font-bold text-white backdrop-blur transition-colors"
               >
                 Abrir vídeo
+                <ExternalLink className="size-3" />
+              </a>
+              <a
+                href={srcFresh}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-white/5 hover:bg-white/10 ring-1 ring-white/10 px-3 py-2 text-xs font-semibold text-zinc-200 backdrop-blur transition-colors"
+              >
+                Abrir (sem cache)
                 <ExternalLink className="size-3" />
               </a>
             </div>
