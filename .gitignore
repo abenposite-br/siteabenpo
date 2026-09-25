@@ -45,5 +45,4 @@ next-env.d.ts
 
 # media files / large binaries
 src/img/*.mp4
-public/videos/
 scripts/*.cjs

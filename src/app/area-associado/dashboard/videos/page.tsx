@@ -62,7 +62,6 @@ function detectVideoType(url: string): string {
 
 function LocalVideoPlayer({
   url,
-  title,
 }: {
   url: string;
   title?: string;
@@ -73,13 +72,14 @@ function LocalVideoPlayer({
   const [errorInfo, setErrorInfo] = useState<{ code: number; msg: string } | null>(
     null,
   );
+  const [baseTimestamp] = useState(() => Date.now());
 
   const src = useMemo(() => resolveLocalVideoSrc(url), [url]);
   const mimeType = useMemo(() => detectVideoType(src), [src]);
   const videoKey = useMemo(() => `${retryKey}-${src}`, [retryKey, src]);
   const cacheBust = useMemo(
-    () => `${src.includes("?") ? "&" : "?"}t=${Date.now() + retryKey}`,
-    [src, retryKey],
+    () => `${src.includes("?") ? "&" : "?"}t=${baseTimestamp + retryKey}`,
+    [src, retryKey, baseTimestamp],
   );
   const srcFresh = `${src}${cacheBust}`;
 
