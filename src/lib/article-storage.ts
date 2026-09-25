@@ -2,7 +2,6 @@ import { db } from "./firebase";
 import {
   collection,
   getDocs,
-  addDoc,
   deleteDoc,
   doc,
   setDoc,
@@ -157,7 +156,7 @@ export async function getArticles(): Promise<Article[]> {
 function normalizeUrl(url: string): string {
   try {
     const u = new URL(url.trim().toLowerCase());
-    let path = u.pathname.replace(/\/+$/, "");
+    const path = u.pathname.replace(/\/+$/, "");
     return `${u.hostname}${path}${u.search}`;
   } catch {
     return url.trim().toLowerCase().replace(/\/+$/, "");
@@ -283,7 +282,6 @@ export async function deduplicateCollection(): Promise<{
     }
   }
 
-  const articleToGroups = new Map<string, Set<string>>();
   const parent = new Map<string, string>();
   for (const a of all) parent.set(a.id, a.id);
 

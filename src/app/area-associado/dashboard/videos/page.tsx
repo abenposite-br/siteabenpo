@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Video,
   ExternalLink,
@@ -40,6 +40,97 @@ function getYoutubeEmbed(url: string): string | null {
 
 function isLocalVideo(url: string): boolean {
   return typeof url === "string" && (url.startsWith("/") || url.startsWith("./"));
+}
+
+function resolveLocalVideoSrc(url: string): string {
+  if (url.startsWith("./")) {
+    const clean = url.replace(/^\.\//, "");
+    return clean.startsWith("/") ? clean : `/${clean}`;
+  }
+  if (!url.startsWith("/")) return `/${url}`;
+  return url;
+}
+
+function LocalVideoPlayer({
+  url,
+}: {
+  url: string;
+  title?: string;
+}) {
+  const [retryKey, setRetryKey] = useState(0);
+  const [hasError, setHasError] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  const src = useMemo(() => resolveLocalVideoSrc(url), [url]);
+  const videoType = useMemo(() => detectVideoType(url), [url]);
+
+  return (
+    <div
+      className="relative w-full bg-black group overflow-hidden"
+      style={{ aspectRatio: "16 / 9" }}
+    >
+      <video
+        key={`${retryKey}-${src}`}
+        controls
+        playsInline
+        preload="auto"
+        onLoadedData={() => {
+          setIsLoaded(true);
+          setHasError(false);
+        }}
+        onError={() => setHasError(true)}
+        onCanPlay={() => setIsLoaded(true)}
+        className="absolute inset-0 w-full h-full object-contain bg-black"
+      >
+        <source src={`${src}`} type={videoType} />
+        <source src={`${src}`} type="video/mp4" />
+        <source src={`${src}`} type="video/webm" />
+        Seu navegador não suporta a reprodução de vídeos.
+      </video>
+
+      {!isLoaded && !hasError && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 text-white z-10 pointer-events-none">
+          <div className="size-10 rounded-full border-4 border-emerald-500/40 border-t-emerald-400 animate-spin mb-3" />
+          <p className="text-xs text-zinc-300">Carregando vídeo...</p>
+        </div>
+      )}
+
+      {hasError && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-zinc-950 via-zinc-900 to-emerald-950 text-white z-20 px-4 text-center">
+          <Play className="size-14 mb-3 text-white/60" />
+          <h4 className="text-sm font-bold text-zinc-100 mb-1">
+            Não foi possível reproduzir
+          </h4>
+          <p className="text-xs text-zinc-400 mb-4 max-w-xs">
+            O arquivo de vídeo pode estar corrompido ou incompatível. Tente
+            novamente ou abra em outra aba.
+          </p>
+          <div className="flex gap-2 flex-wrap justify-center">
+            <button
+              type="button"
+              onClick={() => {
+                setHasError(false);
+                setIsLoaded(false);
+                setRetryKey((k) => k + 1);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-3 py-2 text-xs font-bold text-white shadow-lg transition-colors"
+            >
+              Tentar novamente
+            </button>
+            <a
+              href={src}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/15 ring-1 ring-white/20 px-3 py-2 text-xs font-bold text-white backdrop-blur transition-colors"
+            >
+              Abrir vídeo
+              <ExternalLink className="size-3" />
+            </a>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function detectVideoType(url: string): string {
@@ -156,21 +247,11 @@ export default function VideosPage() {
                       />
                     </div>
                   ) : local ? (
-                    <div
-                      className="relative w-full bg-zinc-900 group"
-                      style={{ aspectRatio: "16 / 9" }}
-                    >
-                      <video
-                        controls
-                        playsInline
-                        preload="metadata"
-                        className="absolute inset-0 w-full h-full object-cover"
-                        poster=""
-                      >
-                        <source src={v.url} type={detectVideoType(v.url)} />
-                        Seu navegador não suporta a reprodução de vídeos.
-                      </video>
-                    </div>
+                    <LocalVideoPlayer
+                      key={v.id}
+                      url={v.url}
+                      title={v.title}
+                    />
                   ) : (
                     <a
                       href={v.url}
