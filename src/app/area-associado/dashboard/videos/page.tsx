@@ -32,6 +32,13 @@ const LOCAL_FALLBACK_VIDEOS: VideoItem[] = [
     url: "/videos/abenpo-video.mp4",
     createdAt: new Date().toISOString(),
   },
+  {
+    id: "video_local_fallback_2",
+    title: "Video sobre calçados ocupacionais",
+    description: "",
+    url: "/videos/video calçados ocupacionais.mp4",
+    createdAt: new Date().toISOString(),
+  },
 ];
 
 type ProbeResult = {

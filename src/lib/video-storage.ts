@@ -22,6 +22,11 @@ const INITIAL_VIDEOS: Array<Omit<Video, "id" | "createdAt"> & { createdAt?: stri
       "Apresentação da Associação Brasileira de Enfermagem em Podiatria Clínica — sua missão, valores, atividades e benefícios para os associados.",
     url: "/videos/abenpo-video.mp4",
   },
+  {
+    title: "Video sobre calçados ocupacionais",
+    description: "",
+    url: "/videos/video calçados ocupacionais.mp4",
+  },
 ];
 
 function withFallbackIds(list: typeof INITIAL_VIDEOS): Video[] {
