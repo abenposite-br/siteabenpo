@@ -141,4 +141,4 @@ export async function GET(request: NextRequest) {
 }
 
 export const revalidate = 31536000;
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
