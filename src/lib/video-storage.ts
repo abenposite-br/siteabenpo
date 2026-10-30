@@ -25,7 +25,7 @@ const INITIAL_VIDEOS: Array<Omit<Video, "id" | "createdAt"> & { createdAt?: stri
   {
     title: "Video sobre calçados ocupacionais",
     description: "",
-    url: "/videos/video calçados ocupacionais.mp4",
+    url: "/videos/video-calcados-ocupacionais.mp4",
   },
 ];
 

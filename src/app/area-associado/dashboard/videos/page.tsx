@@ -36,7 +36,7 @@ const LOCAL_FALLBACK_VIDEOS: VideoItem[] = [
     id: "video_local_fallback_2",
     title: "Video sobre calçados ocupacionais",
     description: "",
-    url: "/videos/video calçados ocupacionais.mp4",
+    url: "/videos/video-calcados-ocupacionais.mp4",
     createdAt: new Date().toISOString(),
   },
 ];

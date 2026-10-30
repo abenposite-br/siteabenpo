@@ -50,14 +50,25 @@ export async function GET(request: NextRequest) {
     }
 
     const fileName = sanitizeFileName(fileParam);
-    const filePath = path.join(VIDEOS_DIR, fileName);
+    let filePath = path.join(VIDEOS_DIR, fileName);
     const ext = path.extname(fileName).toLowerCase();
 
     if (!fs.existsSync(filePath)) {
-      return Response.json(
-        { error: "Arquivo não encontrado", path: `/public/videos/${fileName}` },
-        { status: 404 },
-      );
+      // Tentar encontrar o arquivo renomeado se o original tinha espaços ou caracteres especiais
+      const alternativeName = fileName
+        .replace(/\s+/g, "-")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+      const alternativePath = path.join(VIDEOS_DIR, alternativeName);
+
+      if (fs.existsSync(alternativePath)) {
+        filePath = alternativePath;
+      } else {
+        return Response.json(
+          { error: "Arquivo não encontrado", path: `/public/videos/${fileName}` },
+          { status: 404 },
+        );
+      }
     }
 
     const { copy, stat } = readVideoFile(filePath, fileName);
